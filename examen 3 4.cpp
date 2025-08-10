@@ -1,108 +1,122 @@
+#pragma once
+
 #include <iostream>
 #include <stack>
-
 using namespace std;
 
-class Node {
+template <typename T>
+class BinarySearchTree
+{
+    template <typename T>
+    class TreeNode
+    {
+    public:
+        TreeNode()
+        {
+            parent = leftChild = rightChild = nullptr;
+            data = {};
+        }
+
+        TreeNode(T data)
+        {
+            parent = leftChild = rightChild = nullptr;
+            this->data = data;
+        }
+
+        T data;
+        TreeNode<T>* parent;
+        TreeNode<T>* leftChild;
+        TreeNode<T>* rightChild;
+    };
+
 public:
-    int data;
-    Node* left;
-    Node* right;
-
-    Node(int value) {
-        data = value;
-        left = nullptr;
-        right = nullptr;
+    BinarySearchTree()
+    {
+        root = nullptr;
+        count = 0;
     }
-};
 
-class BinarySearchTree {
-private:
-    Node* root;
+    // Inserción recursiva con error intencional (<= en lugar de <)
+    void AddWithError(T value)
+    {
+        if (root == nullptr)
+        {
+            root = new TreeNode<T>(value);
+            count++;
+            return;
+        }
+        root = InsertRec(root, nullptr, value);
+    }
 
-    // Función auxiliar InsertRec (con error intencional)
-    Node* InsertRec(Node* node, int value) {
+    TreeNode<T>* InsertRec(TreeNode<T>* node, TreeNode<T>* parent, T value)
+    {
         if (node == nullptr)
-            return new Node(value);
+        {
+            TreeNode<T>* newNode = new TreeNode<T>(value);
+            newNode->parent = parent;
+            count++;
+            return newNode;
+        }
+
         // ERROR intencional: debería ser value < node->data
         if (value <= node->data)
-            node->left = InsertRec(node->left, value);
+        {
+            node->leftChild = InsertRec(node->leftChild, node, value);
+        }
         else
-            node->right = InsertRec(node->right, value);
+        {
+            node->rightChild = InsertRec(node->rightChild, node, value);
+        }
         return node;
     }
 
-public:
-    BinarySearchTree() {
-        root = nullptr;
-    }
-
-    void Insert(int value) {
-        root = InsertRec(root, value);
-    }
-
-    // Search iterativo
-    Node* Search(int value) {
-        Node* current = root;
-        while (current != nullptr) {
+    // Búsqueda iterativa
+    TreeNode<T>* SearchIterative(T value)
+    {
+        TreeNode<T>* current = root;
+        while (current != nullptr)
+        {
             if (value == current->data)
                 return current;
             else if (value < current->data)
-                current = current->left;
+                current = current->leftChild;
             else
-                current = current->right;
+                current = current->rightChild;
         }
-        return nullptr;  // No encontrado
+        return nullptr; // no encontrado
     }
 
-    // Recorrido Post-order iterativo usando dos pilas
-    void PostOrderIterative() {
+    // Recorrido post-order iterativo usando dos pilas
+    void PostOrderIterative()
+    {
         if (root == nullptr)
             return;
 
-        stack<Node*> stack1, stack2;
+        stack<TreeNode<T>*> stack1, stack2;
         stack1.push(root);
 
-        while (!stack1.empty()) {
-            Node* node = stack1.top();
+        while (!stack1.empty())
+        {
+            TreeNode<T>* node = stack1.top();
             stack1.pop();
             stack2.push(node);
 
-            if (node->left != nullptr)
-                stack1.push(node->left);
-            if (node->right != nullptr)
-                stack1.push(node->right);
+            if (node->leftChild != nullptr)
+                stack1.push(node->leftChild);
+            if (node->rightChild != nullptr)
+                stack1.push(node->rightChild);
         }
 
-        while (!stack2.empty()) {
-            Node* node = stack2.top();
+        while (!stack2.empty())
+        {
+            TreeNode<T>* node = stack2.top();
             stack2.pop();
             cout << node->data << " ";
         }
         cout << endl;
     }
+
+private:
+    TreeNode<T>* root;
+    int count;
 };
-
-int main() {
-    BinarySearchTree bst;
-
-    // Insertar valores (con duplicados para ver el efecto del error intencional)
-    bst.Insert(10);
-    bst.Insert(5);
-    bst.Insert(15);
-    bst.Insert(5);  // Duplicado, se insertará a la izquierda debido al error intencional
-    bst.Insert(20);
-
-    // Buscar un valor
-    Node* found = bst.Search(15);
-    if (found != nullptr)
-        cout << "Valor 15 encontrado" << endl;
-    else
-        cout << "Valor 15 no encontrado" << endl;
-
-    // Recorrido postorder iterativo
-    cout << "Recorrido postorder iterativo: ";
-    bst.PostOrderIterative();
-
-    return 0;
-}
